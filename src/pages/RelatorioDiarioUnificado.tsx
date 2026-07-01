@@ -367,7 +367,7 @@ const RelatorioDiarioUnificado: React.FC = () => {
       const avals = avaliacoesDia.filter(a => a.escolaId === escola.id);
       const total = ocorrs.length + avals.length;
       return { escola, ocorrs, avals, total };
-    }).filter(e => e.total > 0);
+    });
   }, [escolasList, ocorrenciasDia, avaliacoesDia]);
 
   // contadores para os cards de resumo
@@ -705,62 +705,63 @@ const RelatorioDiarioUnificado: React.FC = () => {
       </div>
 
       {/* ── Conteúdo por escola ── */}
-      {escolasComDados.length === 0 ? (
-        <Card className="py-16 text-center">
-          <ClipboardList className="w-16 h-16 mx-auto text-gray-200 mb-4" />
-          <p className="text-gray-500 font-medium">Nenhum registro para o dia selecionado</p>
-          <p className="text-gray-400 text-sm mt-1">
-            Selecione outra data ou unidade para visualizar os dados.
-          </p>
-        </Card>
-      ) : (
-        <div className="space-y-8">
-          {escolasComDados.map(({ escola, ocorrs, avals }) => (
-            <div key={escola.id}>
-              {/* Header da escola */}
-              <div className="flex items-center gap-3 mb-4">
-                <div className="bg-gradient-to-r from-blue-700 to-blue-600 flex items-center gap-3 px-4 py-3 rounded-xl shadow flex-1">
-                  <Building2 className="w-5 h-5 text-blue-200" />
-                  <div>
-                    <h2 className="font-bold text-white">{escola.nome}</h2>
-                    <p className="text-blue-200 text-xs">
-                      {escola.tipo} · {escola.cameras} câmeras ·{' '}
-                      {format(targetDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                    </p>
-                  </div>
-                  <span className="ml-auto bg-white/20 text-white text-sm font-bold px-3 py-1 rounded-full">
-                    {ocorrs.length + avals.length} reg.
-                  </span>
+      <div className="space-y-8">
+        {escolasComDados.map(({ escola, ocorrs, avals }) => (
+          <div key={escola.id}>
+            {/* Header da escola */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`bg-gradient-to-r flex items-center gap-3 px-4 py-3 rounded-xl shadow flex-1 ${ocorrs.length + avals.length === 0 ? 'from-slate-300 to-slate-200' : 'from-blue-700 to-blue-600'}`}>
+                <Building2 className={`w-5 h-5 ${ocorrs.length + avals.length === 0 ? 'text-slate-400' : 'text-blue-200'}`} />
+                <div>
+                  <h2 className={`font-bold ${ocorrs.length + avals.length === 0 ? 'text-slate-500' : 'text-white'}`}>{escola.nome}</h2>
+                  <p className={`text-xs ${ocorrs.length + avals.length === 0 ? 'text-slate-400' : 'text-blue-200'}`}>
+                    {escola.tipo} · {escola.cameras} câmeras ·{' '}
+                    {format(targetDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                  </p>
+                </div>
+                <span className={`ml-auto text-sm font-bold px-3 py-1 rounded-full ${ocorrs.length + avals.length === 0 ? 'bg-slate-300 text-slate-500' : 'bg-white/20 text-white'}`}>
+                  {ocorrs.length + avals.length} reg.
+                </span>
+              </div>
+            </div>
+
+            {ocorrs.length + avals.length === 0 ? (
+              <div className="pl-4">
+                <div className="border border-dashed border-slate-200 rounded-xl py-8 text-center">
+                  <ClipboardList className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                  <p className="text-sm text-slate-400">Nenhum registro para esta unidade nesta data</p>
                 </div>
               </div>
+            ) : (
+              <>
+                {/* Casos (ocorrência → chamado → admin) */}
+                {ocorrs.length > 0 && (
+                  <div className="pl-4 space-y-5">
+                    {ocorrs.map((occ, idx) => (
+                      <CasoCard
+                        key={occ.id}
+                        occ={occ}
+                        chamado={getChamado(occ.id)}
+                        idx={idx + 1}
+                      />
+                    ))}
+                  </div>
+                )}
 
-              {/* Casos (ocorrência → chamado → admin) */}
-              {ocorrs.length > 0 && (
-                <div className="pl-4 space-y-5">
-                  {ocorrs.map((occ, idx) => (
-                    <CasoCard
-                      key={occ.id}
-                      occ={occ}
-                      chamado={getChamado(occ.id)}
-                      idx={idx + 1}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Avaliações de portaria */}
-              {avals.length > 0 && (
-                <div className="mt-4 space-y-3">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide ml-1">
-                    Avaliações de Portaria
-                  </p>
-                  {avals.map(a => <AvaliacaoCard key={a.id} aval={a} />)}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+                {/* Avaliações de portaria */}
+                {avals.length > 0 && (
+                  <div className="mt-4 space-y-3">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide ml-1">
+                      Avaliações de Portaria
+                    </p>
+                    {avals.map(a => <AvaliacaoCard key={a.id} aval={a} />)}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
