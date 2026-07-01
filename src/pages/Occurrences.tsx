@@ -8,7 +8,7 @@ import Badge from '../components/ui/Badge';
 import Modal from '../components/ui/Modal';
 import { Select, Textarea } from '../components/ui/Input';
 import { DataTable } from '../components/ui/DataTable';
-import { Ocorrencia, CategoriaOcorrencia } from '../types';
+import { Ocorrencia, CategoriaOcorrencia, StatusOcorrencia } from '../types';
 import { categorias, ambientes, statusOcorrencia, escolas } from '../data/mockData';
 import { format } from 'date-fns';
 
@@ -380,8 +380,21 @@ const Occurrences: React.FC = () => {
       key: 'status',
       header: 'Status',
       render: (item: Ocorrencia) => {
-        const badge = getStatusBadge(item.status);
-        return <Badge variant={badge.variant} size="sm">{badge.label}</Badge>;
+        if (item.status === 'finalizada' || item.status === 'encerrada') {
+          const badge = getStatusBadge(item.status);
+          return <Badge variant={badge.variant} size="sm">{badge.label}</Badge>;
+        }
+        return (
+          <select
+            value={item.status}
+            onChange={(e) => updateOcorrencia(item.id, { status: e.target.value as StatusOcorrencia })}
+            onClick={(e) => e.stopPropagation()}
+            className="text-sm border border-gray-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white cursor-pointer"
+          >
+            <option value="aberta">Aguardando</option>
+            <option value="em_atendimento">Em Atendimento</option>
+          </select>
+        );
       },
     },
     {
@@ -411,6 +424,18 @@ const Occurrences: React.FC = () => {
         return (
           <span className="text-sm text-gray-600 whitespace-pre-wrap break-words max-w-xs leading-relaxed">
             {ch?.parecerTecnico ? ch?.parecerTecnico : '-'}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'descricaoAdm',
+      header: 'Descrição Administrativa',
+      render: (item: Ocorrencia) => {
+        const ch = chamados.find(c => c.ocorrenciaId === item.id);
+        return (
+          <span className="text-sm text-gray-600 whitespace-pre-wrap break-words max-w-xs leading-relaxed">
+            {ch?.observacoesAdmin ? ch?.observacoesAdmin : '-'}
           </span>
         );
       },
