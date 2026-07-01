@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import type {
   Escola, Usuario, Ocorrencia, Chamado,
-  AvaliacaoPorteiro, RelatorioDiario,
+  AvaliacaoPorteiro, RelatorioDiario, Audio as AudioType,
 } from '../types';
 
 // Mapeamento de colunas snake_case para camelCase
@@ -51,6 +51,7 @@ const mapChamado = (row: any): Chamado => ({
   encerradoPor: row.encerrado_por,
   parecerTecnico: row.parecer_tecnico,
   conclusaoTecnica: row.conclusao_tecnica,
+  situacaoFechamento: row.situacao_fechamento,
 });
 
 const mapAvaliacao = (row: any): AvaliacaoPorteiro => ({
@@ -62,6 +63,15 @@ const mapAvaliacao = (row: any): AvaliacaoPorteiro => ({
   motivo: row.motivo,
   observacoes: row.observacoes,
   tecnicoResponsavel: row.tecnico_responsavel,
+  data: new Date(row.data),
+});
+
+const mapAudio = (row: any): AudioType => ({
+  id: row.id,
+  ocorrenciaId: row.ocorrencia_id,
+  arquivoUrl: row.arquivo_url,
+  transcricao: row.transcricao,
+  duracao: row.duracao,
   data: new Date(row.data),
 });
 
@@ -231,6 +241,7 @@ export async function updateChamado(id: string, data: Partial<Chamado>): Promise
   if (data.encerradoPor !== undefined) updates.encerrado_por = data.encerradoPor;
   if (data.parecerTecnico !== undefined) updates.parecer_tecnico = data.parecerTecnico;
   if (data.conclusaoTecnica !== undefined) updates.conclusao_tecnica = data.conclusaoTecnica;
+  if (data.situacaoFechamento !== undefined) updates.situacao_fechamento = data.situacaoFechamento;
   const { error } = await supabase.from('chamados').update(updates).eq('id', id);
   if (error) throw error;
 }
@@ -269,6 +280,31 @@ export async function createAvaliacao(avaliacao: Omit<AvaliacaoPorteiro, 'id' | 
     ...mapAvaliacao(data),
     escolaNome: (data as any).escolas?.nome,
   };
+}
+
+// ============================
+// AUDIOS
+// ============================
+export async function fetchAudios(): Promise<AudioType[]> {
+  const { data, error } = await supabase.from('audios').select('*').order('data', { ascending: false });
+  if (error) throw error;
+  return (data || []).map(mapAudio);
+}
+
+export async function createAudio(audio: Omit<AudioType, 'id' | 'data'>): Promise<AudioType> {
+  const { data, error } = await supabase
+    .from('audios')
+    .insert({
+      ocorrencia_id: audio.ocorrenciaId,
+      arquivo_url: audio.arquivoUrl,
+      transcricao: audio.transcricao,
+      duracao: audio.duracao,
+      data: new Date().toISOString(),
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapAudio(data);
 }
 
 // ============================

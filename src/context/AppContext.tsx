@@ -92,7 +92,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           Notification.requestPermission();
         }
 
-        const [escolasData, usuariosData, ocorrenciasData, chamadosData, avaliacoesData, relatoriosData] =
+        const [escolasData, usuariosData, ocorrenciasData, chamadosData, avaliacoesData, relatoriosData, audiosData] =
           await Promise.all([
             supabaseService.fetchEscolas(),
             supabaseService.fetchUsuarios(),
@@ -100,6 +100,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             supabaseService.fetchChamados(),
             supabaseService.fetchAvaliacoes(),
             supabaseService.fetchRelatorios(),
+            supabaseService.fetchAudios(),
           ]);
         if (escolasData.length) setEscolas(escolasData);
         if (usuariosData.length) setUsuarios(usuariosData);
@@ -107,6 +108,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if (chamadosData.length) setChamados(chamadosData);
         if (avaliacoesData.length) setAvaliacoesPorteiros(avaliacoesData);
         if (relatoriosData.length) setRelatoriosDiarios(relatoriosData);
+        if (audiosData.length) setAudios(audiosData);
         
         // Se conseguimos carregar tudo sem erro, supabaseError é false
         setSupabaseError(false);
@@ -120,6 +122,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setChamados(initialChamados);
         setAvaliacoesPorteiros(initialAvaliacoes);
         setRelatoriosDiarios(initialRelatorios);
+        setAudios([]);
       } finally {
         setLoading(false);
       }
@@ -191,7 +194,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setOcorrencias(prev => [newOcorrencia, ...prev]);
     supabaseService.createOcorrencia(ocorrencia).then(created => {
       setOcorrencias(prev => prev.map(o => o.id === id ? { ...o, id: created.id } : o));
-    }).catch(() => {});
+    }).catch(err => console.error('Erro ao salvar ocorrência no Supabase:', err));
     return id;
   }, []);
 
@@ -210,7 +213,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setChamados(prev => [newChamado, ...prev]);
     supabaseService.createChamado(chamado).then(created => {
       setChamados(prev => prev.map(c => c.id === id ? { ...c, id: created.id } : c));
-    }).catch(() => {});
+    }).catch(err => console.error('Erro ao salvar chamado no Supabase:', err));
     return id;
   }, []);
 
@@ -247,6 +250,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const id = generateId('aud');
     const newAudio: AudioType = { ...audio, id, data: new Date() };
     setAudios(prev => [newAudio, ...prev]);
+    supabaseService.createAudio(audio).then(created => {
+      setAudios(prev => prev.map(a => a.id === id ? { ...a, id: created.id } : a));
+    }).catch(err => console.error('Erro ao salvar áudio no Supabase:', err));
     return id;
   }, []);
 
